@@ -1,0 +1,253 @@
+name: "CatNet"
+layer {
+  name: "ar"
+  type: "Data"
+  top: "data"
+  top: "label"
+  data_param {
+    source: "D:/YongD/caffe-windows-master/examples/ar/train_leveldb"
+    backend: LEVELDB
+    batch_size: 100
+  }
+  transform_param {
+    scale: 0.00390625
+  }
+  include: { phase: TRAIN }
+}
+layer {
+  name: "ar"
+  type: "Data"
+  top: "data"
+  top: "label"
+  data_param {
+    source: "D:/YongD/caffe-windows-master/examples/ar/test_leveldb"
+    backend: LEVELDB
+    batch_size: 100
+  }
+  transform_param {
+    scale: 0.00390625
+  }
+  include: { phase: TEST }
+}
+  
+
+
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  convolution_param {
+    num_output: 6
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "relu1"
+  type: "ReLU"
+  bottom: "conv1"
+  top: "conv1"
+}
+
+layer {
+  name: "pool1"
+  type: "Pooling"
+  bottom: "conv1"
+  top: "pool1"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "pool1"
+  top: "conv2"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  convolution_param {
+    num_output: 12
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "relu2"
+  type: "ReLU"
+  bottom: "conv2"
+  top: "conv2"
+}
+
+
+layer {
+  name: "pool2"
+  type: "Pooling"
+  bottom: "conv2"
+  top: "pool2"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "pool2"
+  top: "conv3"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  convolution_param {
+    num_output: 16
+    kernel_size: 2
+    stride: 1
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "relu3"
+  type: "ReLU"
+  bottom: "conv3"
+  top: "conv3"
+}
+
+layer {
+  name: "pool3"
+  type: "Pooling"
+  bottom: "conv3"
+  top: "pool3"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+
+
+layer {
+  name: "pool1_flatt"
+  type: "Flatten"
+  bottom: "pool1"
+  top: "pool1_flatt"
+}
+
+layer {
+  name: "conv2_flatt"
+  type: "Flatten"
+  bottom: "conv2"
+  top: "conv2_flatt"
+}
+
+layer {
+  name: "pool2_flatt"
+  type: "Flatten"
+  bottom: "pool2"
+  top: "pool2_flatt"
+}
+
+layer {
+  name: "pool3_flatt"
+  type: "Flatten"
+  bottom: "pool3"
+  top: "pool3_flatt"
+}
+
+layer {
+  name: "concat1"
+  bottom: "pool1_flatt"
+  bottom: "conv2_flatt"
+  bottom: "pool2_flatt"
+  bottom: "pool3_flatt"
+  top: "concat1"
+  type: "Concat"
+  concat_param {
+    axis: 1
+  }
+ }
+ 
+layer {
+  name: "ip1"
+  type: "InnerProduct"
+  bottom: "concat1"
+  top: "ip1"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 2
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "ip1"
+  bottom: "label"
+  top: "accuracy"
+  include {
+    phase: TEST
+  }
+}
+layer {
+  name: "accuracy1"
+  type: "Accuracy"
+  bottom: "ip1"
+  bottom: "label"
+  top: "accuracy"
+  include {
+    phase: TRAIN
+  }
+}
+
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "ip1"
+  bottom: "label"
+  top: "loss"
+}
